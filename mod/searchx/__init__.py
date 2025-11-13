@@ -4,7 +4,8 @@ from mod.searchx import api, kugou, netease
 
 
 def search_all(title, artist, album, timeout=15):
-    funcs = [api, kugou, netease]
+    # funcs = [api, kugou, netease]
+    funcs = [kugou, netease]
     results = []
 
     def request(task):
@@ -35,6 +36,7 @@ def search_all(title, artist, album, timeout=15):
                 future.cancel()
 
     return results
+
 
 if __name__ == "__main__":
     print(search_all("大地", "Beyond", ""))

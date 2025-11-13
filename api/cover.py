@@ -1,3 +1,4 @@
+import os
 from . import *
 
 import requests
@@ -9,7 +10,8 @@ from mod.auth import require_auth_decorator
 
 from mod import searchx
 
-headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"}
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"}
 
 # 跟踪重定向
 
@@ -26,13 +28,37 @@ def follow_redirects(url, max_redirects=10):
     abort(404)          # 达到最大重定向次数仍未获得 200 状态码，放弃
 
 
-def local_cover_search(title: str, artist: str, album: str):
-    result: list = searchx.search_all(title=title, artist=artist, album=album, timeout=30)
+def local_cover_api_search(title: str, artist: str, album: str):
+    result: list = searchx.search_all(
+        title=title, artist=artist, album=album, timeout=30)
     for item in result:
         if cover_url := item.get('cover'):
             res = requests.get(cover_url, headers=headers)
             if res.status_code == 200:
                 return res.content, 200, {"Content-Type": res.headers['Content-Type']}
+
+
+def get_local_cover_file(path: str):
+    if path:
+        parent_path = os.path.dirname(path)
+        possible_cover_files = [
+            os.path.join(parent_path, 'cover.jpg'),
+            os.path.join(parent_path, 'cover.png'),
+            os.path.join(parent_path, 'Cover.jpg'),
+            os.path.join(parent_path, 'Cover.png'),
+            os.path.splitext(path)[0] + '.jpg',
+            os.path.splitext(path)[0] + '.png',
+        ]
+        for cover_path in possible_cover_files:
+            if os.path.isfile(cover_path):
+                try:
+                    with open(cover_path, 'rb') as f:
+                        content_type = "image/jpeg" if cover_path.lower().endswith('.jpg') else "image/png"
+                        return f.read(), 200, {"Content-Type": content_type}
+                except:
+                    pass
+    return None
+
 
 @app.route('/cover', methods=['GET'], endpoint='cover_endpoint')
 @require_auth_decorator(permission='rw')
@@ -42,16 +68,22 @@ def cover_api():
     title = unquote_plus(request.args.get('title', ''))
     artist = unquote_plus(request.args.get('artist', ''))
     album = unquote_plus(request.args.get('album', ''))
+    path = unquote_plus(request.args.get('path', ''))
     req_args = {key: request.args.get(key) for key in request.args}
+    '''
     # 构建目标URL
     target_url = 'http://api.lrc.cx/cover'
     result = requests.get(target_url, params=req_args, headers=headers)
     if result.status_code == 200:
         return result.content, 200, {"Content-Type": result.headers['Content-Type']}
-    elif res := local_cover_search(title, artist, album):
+    '''
+    # 本地文件优先
+    if res := get_local_cover_file(path):
         return res
-    elif result.status_code == 404:
-        abort(404)
+    elif res := local_cover_api_search(title, artist, album):
+        return res
+    # elif result.status_code == 404:
+        # abort(404)
     else:
         abort(500, '服务存在错误，暂时无法查询')
 
