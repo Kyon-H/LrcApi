@@ -39,7 +39,7 @@ def local_cover_api_search(title: str, artist: str, album: str):
 
 
 def get_local_cover_file(path: str):
-    if path:
+    if os.path.isfile(path):
         parent_path = os.path.dirname(path)
         possible_cover_files = [
             os.path.join(parent_path, 'cover.jpg'),
