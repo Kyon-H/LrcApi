@@ -1,4 +1,7 @@
 .git
 .github
 tests/
+venv/
+config/
+logs/
 .deploy_tmp_path

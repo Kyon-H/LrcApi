@@ -1,25 +1,30 @@
+import os
 from app import app
 import pytest
+from dotenv import load_dotenv
+
+# load .env file
+load_dotenv()
+# Access environment variables
+auth = os.environ.get('AUTH_TOKEN')
 
 
 @pytest.fixture
 def auth_client():
     with app.test_client() as client:
-        client.environ_base['HTTP_AUTHORIZATION'] = '123321223'
+        client.environ_base['HTTP_AUTHORIZATION'] = auth
         yield client
 
 
-def test_home_route():
+def test_home_route(auth_client):
     # Use Flask test client to simulate requests
-    with app.test_client() as client:
-        response = client.get('/')
-        assert response.status_code < 400
+    response = auth_client.get('/')
+    assert response.status_code < 400
 
 
-def test_source_route():
-    with app.test_client() as client:
-        response = client.get('/src')
-        assert response.status_code < 300
+def test_source_route(auth_client):
+    response = auth_client.get('/src')
+    assert response.status_code < 300
 
 
 def test_lyrics_route(auth_client):
