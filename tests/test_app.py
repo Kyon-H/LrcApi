@@ -12,7 +12,8 @@ auth = os.environ.get('AUTH_TOKEN')
 @pytest.fixture
 def auth_client():
     with app.test_client() as client:
-        client.environ_base['HTTP_AUTHORIZATION'] = auth
+        if auth:
+            client.environ_base['HTTP_AUTHORIZATION'] = auth
         yield client
 
 
@@ -29,7 +30,7 @@ def test_source_route(auth_client):
 
 def test_lyrics_route(auth_client):
     response = auth_client.get('/lyrics?title=使一颗心免于哀伤')
-    assert response.status_code == 500
+    assert response.status_code == 200
 
 
 def test_cover_route(auth_client):
