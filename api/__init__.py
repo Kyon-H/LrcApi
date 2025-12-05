@@ -33,11 +33,11 @@ cache = Cache(app, config={
 
 # 缓存键，解决缓存未忽略参数的情况
 def make_cache_key(*args, **kwargs) -> str:
-    path:str = request.path
-    args:str = str(hash(frozenset(request.args.items())))
-    auth_key:str = str(request.headers.get('Authorization', '')
-                       or request.headers.get('Authentication', ''))
-    cookie:str = str(request.cookies.get('api_auth_token', ''))
+    path: str = request.path
+    args: str = str(hash(frozenset(request.args.items())))
+    auth_key: str = str(request.headers.get('Authorization', '')
+                        or request.headers.get('Authentication', ''))
+    cookie: str = str(request.cookies.get('api_auth_token', ''))
     return path + args + auth_key + cookie
 
 
@@ -48,7 +48,8 @@ def before_request():
     记录请求开始时间，用于计算请求处理时长
     """
     g.start_time = time.time()
-    logger.info(f"收到请求: {request.method} {request.path}")
+    logger.info(
+        f"收到请求: {request.method} {request.full_path}")
 
 
 @app.after_request
@@ -63,12 +64,13 @@ def after_request(response):
     response.headers['Server'] = 'LrcApi'
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
-    
+
     # 计算并记录请求处理时长
     if hasattr(g, 'start_time'):
         duration = time.time() - g.start_time
-        logger.info(f"请求处理完成: {request.method} {request.path} - 状态码: {response.status_code} - 耗时: {duration:.3f}s")
-    
+        logger.info(
+            f"请求处理完成: {request.method} {request.full_path} - 状态码: {response.status_code} - 耗时: {duration:.3f}s")
+
     return response
 
 
@@ -78,7 +80,7 @@ def get_base_path():
     """
     if getattr(sys, 'frozen', False):
         return sys._MEIPASS
-        
+
     # 判断是否以模块方式运行
     if __package__:
         return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
