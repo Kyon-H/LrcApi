@@ -49,7 +49,7 @@ def before_request():
     """
     g.start_time = time.time()
     logger.info(
-        f"收到请求: {request.method} {request.full_path}")
+        f"收到请求: {request.method} {request.path}")
 
 
 @app.after_request

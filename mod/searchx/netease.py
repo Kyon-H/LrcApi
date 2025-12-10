@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 # type: 1-songs, 10-albums, 100-artists, 1000-playlists
-COMMON_SEARCH_URL_WANGYI = 'https://music.163.com/api/search/get/web?csrf_token=hlpretag=&hlposttag=&s={}&type={}&offset={}&total=true&limit={}'
+COMMON_SEARCH_URL_WANGYI = 'https://music.163.com/api/search/get/web?csrf_token=&hlpretag=&hlposttag=&s={}&type={}&offset={}&total=true&limit={}'
 ALBUM_SEARCH_URL_WANGYI = 'https://music.163.com/api/album/{}?ext=true'
 LYRIC_URL_WANGYI = 'https://music.163.com/api/song/lyric?id={}&lv=1&tv=1'
 ARTIST_SEARCH_URL = 'http://music.163.com/api/v1/artist/{}'
@@ -130,9 +130,16 @@ async def get_lyrics(session: aiohttp.ClientSession, track_id: int):
     url = LYRIC_URL_WANGYI.format(track_id)
     json_data_r = await session.get(url, headers=headers)
     json_data = json.loads(await json_data_r.text())
-    if json_data.get('lrc', False) and json_data.get('lrc').get('lyric', False):
-        return json_data['lrc']['lyric']
-    return None
+
+    lrc = json_data.get('lrc', {}).get('lyric')
+    # 翻译歌词
+    tlrc = json_data.get('tlyric', {}).get('lyric')
+
+    if not lrc and not tlrc:
+        return None
+    if lrc and tlrc:
+        return lrc + "\n" + tlrc
+    return lrc or tlrc
 
 
 async def a_search(title='', artist='', album=''):
@@ -182,9 +189,9 @@ async def search_album(session, artist, album):
 
 async def search_track(session, title, artist, album):
     result_list = []
-    limit = 10
+    limit = 5
     search_str = ' '.join([item for item in [title, artist, album] if item])
-    url = COMMON_SEARCH_URL_WANGYI.format(search_str, 1, 0, 100)
+    url = COMMON_SEARCH_URL_WANGYI.format(search_str, 1, 0, 10)
 
     response = await session.get(url, headers=headers)
 
@@ -202,16 +209,19 @@ async def search_track(session, title, artist, album):
         song_names: list = song_item['alias']
         song_names.append(song_item['name'])
         artists = song_item.get("artists", None)
-        singer_name = " ".join([x['name'] for x in artists]) if artists is not None else ""
+        singer_name = " ".join([x['name']
+                               for x in artists]) if artists is not None else ""
         album_ = song_item.get("album", None)
         album_name = album_['name'] if album is not None else ''
         # 取所有名字中最高的相似度
-        title_conform_ratio = max([textcompare.association(title, name) for name in song_names])
+        title_conform_ratio = max(
+            [textcompare.association(title, name) for name in song_names])
 
         artist_conform_ratio = textcompare.assoc_artists(artist, singer_name)
         album_conform_ratio = textcompare.association(album, album_name)
 
-        ratio: float = (title_conform_ratio * (artist_conform_ratio + album_conform_ratio) / 2.0) ** 0.5
+        ratio: float = (title_conform_ratio *
+                        (artist_conform_ratio + album_conform_ratio) / 2.0) ** 0.5
 
         if ratio >= 0.2:
             song_id = song_item['id']
