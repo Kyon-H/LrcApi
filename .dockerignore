@@ -5,3 +5,12 @@ venv/
 config/
 logs/
 .deploy_tmp_path
+.vscode/
+.env
+.dockerignore
+.gitignore
+Dockerfile
+.pytest_cache/
+build.sh
+buildup.py
+make_release.py

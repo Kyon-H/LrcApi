@@ -1,6 +1,6 @@
 import os
-from app import app
 import pytest
+from app import app
 from dotenv import load_dotenv
 
 # load .env file
@@ -9,7 +9,7 @@ load_dotenv()
 auth = os.environ.get('AUTH_TOKEN')
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def auth_client():
     with app.test_client() as client:
         if auth:
@@ -17,31 +17,49 @@ def auth_client():
         yield client
 
 
-def test_home_route(auth_client):
+def test_home_route(auth_client) -> None:
     # Use Flask test client to simulate requests
     response = auth_client.get('/')
     assert response.status_code < 400
 
 
-def test_source_route(auth_client):
+def test_source_route(auth_client) -> None:
     response = auth_client.get('/src')
     assert response.status_code < 300
 
 
-def test_lyrics_route(auth_client):
-    response = auth_client.get('/lyrics?title=使一颗心免于哀伤')
-    assert response.status_code == 200
-
-
-def test_cover_route(auth_client):
+@pytest.mark.parametrize('title, artist, album, path', [
+    ['使一颗心免于哀伤', '', '', ''],
+    ['鳥の詩', 'Lia', "AIR Analog Collector's Edition – 鳥の詩 / Farewell song", '']
+])
+def test_lyrics_route(auth_client, title, artist, album, path) -> None:
+    uri = f'/lyrics?title={title}&artist={artist}&album={album}&path={path}'
     response = auth_client.get(
-        '/cover',
+        '/lyrics',
         query_string={
-            'artist': '東山奈央',
-            'title': 'そういう感じのn回目',
-            'album': 'とおりゃんせ',
-            'path': '/home/load/Music/2025/2025.10/[251105]+TVアニメ「かくりよの宿飯+弐」OP&EDテーマ「とおりゃんせ／涙のレシピ」／東山奈央+[FLAC+48kHz／24bit]/05.+そういう感じのn回目.flac'
+            'artist': artist,
+            'title': title,
+            'album': album,
+            'path': path
         }
     )
     print(response.data)
-    assert response.status_code < 500
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize('title, artist, album, path', [
+    ['そういう感じのn回目', '東山奈央', 'とおりゃんせ', ''],
+    ['鳥の詩', 'Lia', "AIR Analog Collector's Edition – 鳥の詩 / Farewell song", '']
+])
+def test_cover_route(auth_client, title, artist, album, path) -> None:
+    # 防止有特殊字符&时被意外截断
+    response = auth_client.get(
+        '/cover',
+        query_string={
+            'artist': artist,
+            'title': title,
+            'album': album,
+            'path': path
+        }
+    )
+    assert response.status_code == 200
