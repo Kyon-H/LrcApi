@@ -40,7 +40,8 @@ def lyrics():
     if path:
         lrc_path = os.path.splitext(path)[0] + '.lrc'
         if os.path.isfile(lrc_path):
-            file_content: str | None = read_file_with_encoding(lrc_path, ['utf-8', 'gbk'])
+            file_content: str | None = read_file_with_encoding(
+                lrc_path, ['utf-8', 'gbk'])
             if file_content is not None:
                 return lrc.standard(file_content)
     try:
@@ -54,7 +55,8 @@ def lyrics():
         title = unquote_plus(request.args.get('title', ''))
         artist = unquote_plus(request.args.get('artist', ''))
         album = unquote_plus(request.args.get('album', ''))
-        result: list = searchx.search_all(title=title, artist=artist, album=album, timeout=30)
+        result: list = searchx.search_all(
+            title=title, artist=artist, album=album, search_for="lyrics", timeout=15)
         if not result[0].get('lyrics'):
             return "Lyrics not found.", 404
         return result[0].get('lyrics')
@@ -87,7 +89,8 @@ def lrc_json():
                     "lyrics": file_content
                 })
 
-    lyrics_list = searchx.search_all(title, artist, album)
+    lyrics_list = searchx.search_all(
+        title=title, artist=artist, album=album, search_for="lyrics", timeout=15)
     if lyrics_list:
         for i in lyrics_list:
             if not i:
@@ -182,7 +185,8 @@ Example
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
     response = client.chat.completions.create(
         model=MODEL,
-        messages=[{"role": "system", "content": PROMPT}, {"role": "user", "content": lyrics}]
+        messages=[{"role": "system", "content": PROMPT},
+                  {"role": "user", "content": lyrics}]
     )
     raw_output = response.choices[0].message.content
 
@@ -192,7 +196,8 @@ Example
     # 提取最终翻译
     final_lyric = re.search(r'\[FINAL\](.*?)\[/FINAL\]', raw_output, re.DOTALL)
     if final_lyric:
-        extracted = f"[Model Name: {MODEL}]\n" + lang_tag + "\n" + final_lyric.group(1).strip()
+        extracted = f"[Model Name: {MODEL}]\n" + \
+            lang_tag + "\n" + final_lyric.group(1).strip()
         return jsonify({"data": extracted, "status": "success", "raw_output": raw_output})
     else:
         return jsonify({"raw_output": raw_output, "status": "failed"}), 500

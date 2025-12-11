@@ -27,7 +27,7 @@ COMMON_SEARCH_URL_WANGYI = 'https://music.163.com/api/search/get/web?csrf_token=
 ALBUM_SEARCH_URL_WANGYI = 'https://music.163.com/api/album/{}?ext=true'
 LYRIC_URL_WANGYI = 'https://music.163.com/api/song/lyric?id={}&lv=1&tv=1'
 ARTIST_SEARCH_URL = 'http://music.163.com/api/v1/artist/{}'
-ALBUMS_SEARCH_URL = "http://music.163.com/api/artist/albums/{}?offset=0&total=true&limit=300"
+ALBUMS_SEARCH_URL = "http://music.163.com/api/artist/albums/{}?offset=0&total=true&limit={}"
 ALBUM_INFO_URL = "http://music.163.com/api/album/{}?ext=true"
 
 
@@ -38,7 +38,7 @@ def listify(obj):
         return [obj]
 
 
-async def search_artist_blur(session: aiohttp.ClientSession, artist_blur, limit=1):
+async def search_artist_blur(session: aiohttp.ClientSession, artist_blur, limit=5):
     """ 由于没有选择交互的过程, 因此 artist_blur 如果输入的不准确, 可能会查询到错误的歌手 """
     # logging.info('开始搜索: ' + artist_blur)
 
@@ -70,8 +70,8 @@ async def search_artist_blur(session: aiohttp.ClientSession, artist_blur, limit=
     return None
 
 
-async def search_albums(session: aiohttp.ClientSession, artist_id):
-    url = ALBUMS_SEARCH_URL.format(artist_id)
+async def search_albums(session: aiohttp.ClientSession, artist_id, limit=5):
+    url = ALBUMS_SEARCH_URL.format(artist_id, limit)
     json_data_r = await session.get(url, headers=headers)
     response = json.loads(await json_data_r.text())
     if response['code'] == 200:
@@ -142,7 +142,7 @@ async def get_lyrics(session: aiohttp.ClientSession, track_id: int):
     return lrc or tlrc
 
 
-async def a_search(title='', artist='', album=''):
+async def a_search(title='', artist='', album='', search_for=''):
     """
     查询封面: 
         三者都传：获取歌曲封面
@@ -158,7 +158,7 @@ async def a_search(title='', artist='', album=''):
     async with aiohttp.ClientSession() as session:
         # 查询歌曲, 包括封面和歌词
         if title:
-            return await search_track(session, title=title, artist=artist, album=album)
+            return await search_track(session, title, artist, album, search_for)
         elif artist and album:
             # 只查询专辑封面
             return await search_album(session, artist, album)
@@ -187,7 +187,7 @@ async def search_album(session, artist, album):
     return None
 
 
-async def search_track(session, title, artist, album):
+async def search_track(session, title: str, artist: str, album: str, search_for: str):
     result_list = []
     limit = 5
     search_str = ' '.join([item for item in [title, artist, album] if item])
@@ -249,8 +249,15 @@ async def search_track(session, title, artist, album):
         track = candidate['item']
         ratio = candidate['ratio']
 
-        cover_url = await get_cover_url(session, track['album_id'])
-        lyrics = await get_lyrics(session, track['trace_id'])
+        lyrics = ''
+        cover_url = ''
+        if search_for == "cover":
+            cover_url = await get_cover_url(session, track['album_id'])
+        elif search_for == "lyrics":
+            lyrics = await get_lyrics(session, track['trace_id'])
+        else:
+            lyrics = await get_lyrics(session, track['trace_id'])
+            cover_url = await get_cover_url(session, track['album_id'])
 
         # 结构化JSON数据
         music_json_data: dict = {
@@ -270,8 +277,8 @@ async def search_track(session, title, artist, album):
 @lru_cache(maxsize=64)
 @no_error(throw=logger.info,
           exceptions=(aiohttp.ClientError, asyncio.TimeoutError, KeyError, IndexError, AttributeError))
-def search(title='', artist='', album=''):
-    return asyncio.run(a_search(title=title, artist=artist, album=album))
+def search(title='', artist='', album='', search_for=''):
+    return asyncio.run(a_search(title=title, artist=artist, album=album, search_for=search_for))
 
 
 if __name__ == "__main__":

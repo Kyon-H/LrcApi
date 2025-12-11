@@ -15,19 +15,21 @@ from mod import tools
 from mygo.devtools import no_error
 
 headers: dict = {'User-Agent': '{"percent": 21.4, "useragent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                         'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36", "system": "Chrome '
-                         '116.0 Win10", "browser": "chrome", "version": 116.0, "os": "win10"}', }
+                 'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36", "system": "Chrome '
+                 '116.0 Win10", "browser": "chrome", "version": 116.0, "os": "win10"}', }
 logger = logging.getLogger(__name__)
 
 
-async def get_cover(session: aiohttp.ClientSession, m_hash: str, m_id: int|str) -> str:
+async def get_cover(session: aiohttp.ClientSession, m_hash: str, m_id: int | str) -> str:
     def _dfid(num):
-        random_str = ''.join(random.sample((string.ascii_letters + string.digits), num))
+        random_str = ''.join(random.sample(
+            (string.ascii_letters + string.digits), num))
         return random_str
 
     # 获取a-z  0-9组成的随机23位数列
     def _mid(num):
-        random_str = ''.join(random.sample((string.ascii_letters[:26] + string.digits), num))
+        random_str = ''.join(random.sample(
+            (string.ascii_letters[:26] + string.digits), num))
         return random_str
 
     music_url = 'https://wwwapi.kugou.com/yy/index.php'
@@ -66,9 +68,12 @@ async def a_search(title='', artist='', album=''):
                         song_hash = song_item["hash"]
                         album_id = song_item["album_id"]
                         album_name = song_item.get("album_name", "")
-                        title_conform_ratio = textcompare.association(title, song_name)
-                        artist_conform_ratio = textcompare.assoc_artists(artist, singer_name)
-                        ratio: float = (title_conform_ratio * (artist_conform_ratio+1)/2) ** 0.5
+                        title_conform_ratio = textcompare.association(
+                            title, song_name)
+                        artist_conform_ratio = textcompare.assoc_artists(
+                            artist, singer_name)
+                        ratio: float = (title_conform_ratio *
+                                        (artist_conform_ratio+1)/2) ** 0.5
                         if ratio >= 0.2:
                             async with session.get(
                                     f"https://krcs.kugou.com/search?ver=1&man=yes&client=mobi&keyword=&duration=&hash={song_hash}&album_audio_id=",
@@ -83,8 +88,10 @@ async def a_search(title='', artist='', album=''):
                                     f"http://lyrics.kugou.com/download?ver=1&client=pc&id={lyrics_id}&accesskey={lyrics_key}&fmt=lrc&charset=utf8",
                                     headers=headers) as response3:
                                 lyrics_data = await response3.json()
-                                lyrics_encode = lyrics_data["content"]  # 这里是Base64编码的数据
-                                lrc_text = tools.standard_lrc(base64.b64decode(lyrics_encode).decode('utf-8'))  # 这里解码
+                                # 这里是Base64编码的数据
+                                lyrics_encode = lyrics_data["content"]
+                                lrc_text = tools.standard_lrc(base64.b64decode(
+                                    lyrics_encode).decode('utf-8'))  # 这里解码
                                 # 结构化JSON数据
                                 music_json_data: dict = {
                                     "title": song_name,
@@ -103,14 +110,15 @@ async def a_search(title='', artist='', album=''):
                                     break
             else:
                 return None
-        sort_li: list[dict] = sorted(result_list, key=lambda x: x['ratio'], reverse=True)
+        sort_li: list[dict] = sorted(
+            result_list, key=lambda x: x['ratio'], reverse=True)
         return [i.get('data') for i in sort_li]
 
 
 @lru_cache(maxsize=64)
 @no_error(throw=logger.info,
           exceptions=(aiohttp.ClientError, asyncio.TimeoutError, KeyError, IndexError, AttributeError))
-def search(title='', artist='', album=''):
+def search(title='', artist='', album='', search_for=''):
     return asyncio.run(a_search(title=title, artist=artist, album=album))
 
 

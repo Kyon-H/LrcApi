@@ -3,13 +3,13 @@ from concurrent import futures
 from mod.searchx import api, kugou, netease
 
 
-def search_all(title, artist, album, timeout=15):
+def search_all(title: str, artist: str, album: str, search_for: str, timeout=15):
     # funcs = [api, kugou, netease]
     funcs = [kugou, netease]
     results = []
 
     def request(task):
-        res: list = task.search(title, artist, album)
+        res: list = task.search(title, artist, album, search_for)
         if isinstance(res, list):
             results.extend(res)
 
@@ -39,4 +39,4 @@ def search_all(title, artist, album, timeout=15):
 
 
 if __name__ == "__main__":
-    print(search_all("大地", "Beyond", ""))
+    print(search_all("大地", "Beyond", "", "cover"))

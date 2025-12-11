@@ -30,7 +30,7 @@ def follow_redirects(url, max_redirects=10):
 
 def local_cover_api_search(title: str, artist: str, album: str):
     result: list = searchx.search_all(
-        title=title, artist=artist, album=album, timeout=30)
+        title=title, artist=artist, album=album, search_for="cover", timeout=15)
     for item in result:
         if cover_url := item.get('cover'):
             res = requests.get(cover_url, headers=headers)
