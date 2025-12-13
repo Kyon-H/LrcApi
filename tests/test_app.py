@@ -33,7 +33,6 @@ def test_source_route(auth_client) -> None:
     ['鳥の詩', 'Lia', "AIR Analog Collector's Edition – 鳥の詩 / Farewell song", '']
 ])
 def test_lyrics_route(auth_client, title, artist, album, path) -> None:
-    uri = f'/lyrics?title={title}&artist={artist}&album={album}&path={path}'
     response = auth_client.get(
         '/lyrics',
         query_string={
@@ -43,8 +42,7 @@ def test_lyrics_route(auth_client, title, artist, album, path) -> None:
             'path': path
         }
     )
-    print(response.data)
-    assert response.status_code == 200
+    assert response.status_code == 200, f"code={response.status_code}\n{response.data}"
 
 
 @pytest.mark.parametrize('title, artist, album, path', [
@@ -62,4 +60,4 @@ def test_cover_route(auth_client, title, artist, album, path) -> None:
             'path': path
         }
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, f"code={response.status_code}\n{response.data}"

@@ -5,7 +5,7 @@ from mod.searchx import api, kugou, netease
 
 def search_all(title: str, artist: str, album: str, search_for: str, timeout=15):
     # funcs = [api, kugou, netease]
-    funcs = [kugou, netease]
+    funcs = [netease, kugou]
     results = []
 
     def request(task):
