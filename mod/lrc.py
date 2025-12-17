@@ -9,8 +9,10 @@ def standard_line(lrc_text: str):
     # 遍历匹配的时间标签，替换毫秒位
     for match in matches:
         old_time_label = match
-        minutes, seconds, millisecond = map(str, re.split('[:.]', old_time_label))
-        minute_str = ('00'+minutes)[-2:] if int(minutes) < 100 else str(minutes)
+        minutes, seconds, millisecond = map(
+            str, re.split('[:.]', old_time_label))
+        minute_str = (
+            '00'+minutes)[-2:] if int(minutes) < 100 else str(minutes)
         second_str = ('00'+seconds)[-2:]
         millisecond_str = (millisecond+'000')[:3]
         new_time_label = f"{minute_str}:{second_str}.{millisecond_str}"
@@ -104,6 +106,11 @@ if __name__ == "__main__":
     [01:25.34]最后你深深藏在我的歌声里"""
     print(standard(lrc))
 
+    import os
+    import sys
+    sys.path.append(os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..')))
     from devtools import Benchmark
+
     b = Benchmark(threads=1, rounds=10000)
     print(b.run(standard, lrc))

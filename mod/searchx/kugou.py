@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 COMMON_SEARCH_URL_KUGO = "http://mobilecdn.kugou.com/api/v3/search/song?format=json&keyword={}&page=1&pagesize={}&showtype=1"
 LYRIC_ID_URL_KUGO = "https://krcs.kugou.com/search?ver=1&man=yes&client=mobi&keyword=&duration=&hash={}&album_audio_id="
 LYRICS_URL_KUGO = "http://lyrics.kugou.com/download?ver=1&client=pc&id={}&accesskey={}&fmt=lrc&charset=utf8"
+SEARCH_LYRICS_KUGO = "http://lyrics.kugou.com/search?ver=1&man=yes&client=pc&keyword={}&duration={}"
 
 
 async def get_cover(session: aiohttp.ClientSession, m_hash: str, m_id: int | str) -> str:
@@ -52,6 +53,20 @@ async def get_cover(session: aiohttp.ClientSession, m_hash: str, m_id: int | str
     if json_data.get("data"):
         return json_data['data'].get("img")
     return ""
+
+
+def get_cover_url(song_info: str) -> str:
+    """
+    从json数据中提取封面url
+    """
+    if song_info.get("group"):
+        url = song_info["group"][0]["trans_param"]["union_cover"]
+    elif song_info.get("trans_param"):
+        url = song_info["trans_param"]["union_cover"]
+    else:
+        url = ""
+    url = url.replace("{size}", "720")
+    return url
 
 
 async def get_lyrics(session: aiohttp.ClientSession, m_hash: str) -> str:
@@ -92,7 +107,7 @@ async def search_track(session: aiohttp.ClientSession, title: str, artist: str, 
     """
     result_list = []
     limit = 3
-    search_str = ' '.join(
+    search_str = '-'.join(
         [item for item in [title, artist, album] if item])
     url = COMMON_SEARCH_URL_KUGO.format(search_str, 5)
     response = await session.get(url, headers=headers)
@@ -110,6 +125,8 @@ async def search_track(session: aiohttp.ClientSession, title: str, artist: str, 
         singer_name = song_item["singername"]
         album_id = song_item["album_id"]
         album_name = song_item["album_name"]
+        song_hash = song_item["hash"]
+        cover_url = get_cover_url(song_item)
         # 计算相似度
         title_conform_ratio = textcompare.association(title, song_name)
         artist_conform_ratio = textcompare.assoc_artists(
@@ -118,14 +135,14 @@ async def search_track(session: aiohttp.ClientSession, title: str, artist: str, 
         ratio: float = (title_conform_ratio *
                         (artist_conform_ratio + album_conform_ratio) / 2.0) ** 0.5
         if ratio >= 0.2:
-            song_hash = song_item["hash"]
             candidate_songs.append(
                 {'ratio': ratio, 'item': {
                     'artist': singer_name,
                     'title': song_name,
                     'album': album_name,
                     'album_id': album_id,
-                    'song_hash': song_hash
+                    'song_hash': song_hash,
+                    "cover": cover_url
                 }})
     # 根据相似度排序
     if len(candidate_songs) < 1:
@@ -139,28 +156,21 @@ async def search_track(session: aiohttp.ClientSession, title: str, artist: str, 
     for candidate in candidate_songs:
         track = candidate['item']
         ratio = candidate['ratio']
-        # 根据 search_for 获取歌词/封面
-        lyrics = ''
-        cover = ''
-        if search_for == 'lyrics':
-            lyrics = await get_lyrics(session, track['song_hash'])
-        elif search_for == 'cover':
-            cover = await get_cover(session, track['song_hash'], track['album_id'])
-        else:
-            lyrics = await get_lyrics(session, track['song_hash'])
-            cover = await get_cover(session, track['song_hash'], track['album_id'])
+        lyrics = await get_lyrics(session, track['song_hash'])
         # 结构化JSON数据
         music_json_data: dict = {
             "title": track['title'],
             "album": track['album'],
             "artist": track['artist'],
             "lyrics": lyrics,
-            "cover": cover,
+            "cover": track['cover'],
             "id": tools.calculate_md5(
                 f"title:{track['title']};artists:{track['artist']};album:{track['album']}", base='decstr')
         }
 
         result_list.append(music_json_data)
+        if ratio > 0.9:
+            break
     return result_list
 
 
@@ -172,6 +182,7 @@ async def a_search(title='', artist='', album='', search_for=''):
             return await search_track(session, title, artist, album, search_for)
         else:
             return await search_track(session, title, artist, album, search_for)
+    return None
 
 
 @lru_cache(maxsize=64)
