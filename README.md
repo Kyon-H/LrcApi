@@ -5,14 +5,19 @@ forked from [HisAtri/LrcApi](https://github.com/HisAtri/LrcApi)
 修改内容：
 
 - 增加对本地封面的支持：优先从本地查找封面图片
+- 修改网易云api，携带返回翻译歌词
+- 重构酷狗api模块搜索逻辑，修改获取封面api，替换已失效接口
 - 修改 build.sh，解决构建本地 Docker 镜像失败问题
-- 完善测试脚本
+- 请求日志显示查询参数
+- 完善测试脚本，添加基于pytest的测试用例
 
 ---
 
 
 
-默认监听 28883 端口，API 地址 `http://0.0.0.0:28883/lyrics` ；新版 API 地址 `http://0.0.0.0:28883/jsonapi` ；封面 API 地址 `http://0.0.0.0:28883/cover` 。
+默认监听 28883 端口，
+歌词API 地址 `http://0.0.0.0:28883/lyrics`  ；
+封面 API 地址 `http://0.0.0.0:28883/cover` 。
 
 ### 启动参数
 
@@ -41,10 +46,6 @@ forked from [HisAtri/LrcApi](https://github.com/HisAtri/LrcApi)
 }
 ```
 
-### 二进制文件
-
-上传至运行目录，`./lrcapi --port 8080 --auth 自定义一个鉴权key`
-
 ### Python 源文件
 
 拉取本项目；或者下载后上传至运行目录，解压 tar.gz
@@ -53,17 +54,21 @@ forked from [HisAtri/LrcApi](https://github.com/HisAtri/LrcApi)
 
 启动服务：`python3 app.py --port 8080 --auth 自定义一个鉴权key`
 
+### 二进制文件
+
+切换至运行目录，`./lrcapi --port 8080 --auth 自定义一个鉴权key`
+
 ### Docker 部署方式
+
+build镜像
 
 ```bash
 docker buildx build --network=host -t lrcapi:local .
 ```
 
+#### 搭配Navidrome
+
 如果你正在使用 Navidrome，请将你的音乐文件目录映射到 Docker 内目录；例如如果你音乐存储的目录是`/www/path/music`，请将启动命令中的映射修改为 `/www/path/music:/www/path/music`
-
-然后访问 `http://0.0.0.0:28883/lyrics` 或新版 API `http://0.0.0.0:28883/jsonapi`
-
-图片 API 地址为 `http://0.0.0.0:28883/cover`
 
 注意：图片返回目前采用反向代理策略，可能存在一定的上下行流量消耗和延迟。
 
@@ -116,3 +121,4 @@ pytest -vs tests/test_app.py::test_cover_route # 执行单个测试
 vscode设置pytest后更方便测试和debug
 
 ![image-20251205235913086](https://raw.githubusercontent.com/kyon-h/image/master/typora/image-20251205235913086.png)
+
