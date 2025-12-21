@@ -8,6 +8,9 @@ from flask_caching import Cache
 import time
 
 app = Flask(__name__)
+# 配置日志
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 v1_bp = Blueprint('v1', __name__, url_prefix='/api/v1')

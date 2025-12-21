@@ -189,9 +189,9 @@ async def search_album(session, artist, album):
 
 async def search_track(session, title: str, artist: str, album: str, search_for: str):
     result_list = []
-    limit = 5
+    limit = 3
     search_str = ' '.join([item for item in [title, artist, album] if item])
-    url = COMMON_SEARCH_URL_WANGYI.format(search_str, 1, 0, 10)
+    url = COMMON_SEARCH_URL_WANGYI.format(search_str, 1, 0, 5)
 
     response = await session.get(url, headers=headers)
 
@@ -264,6 +264,7 @@ async def search_track(session, title: str, artist: str, album: str, search_for:
             "title": track['title'],
             "album": track['album'],
             "artist": track['artist'],
+            "ratio": ratio,
             "lyrics": lyrics,
             "cover": cover_url,
             "id": tools.calculate_md5(
@@ -271,6 +272,8 @@ async def search_track(session, title: str, artist: str, album: str, search_for:
         }
 
         result_list.append(music_json_data)
+        if ratio > 0.9:
+            break
     return result_list
 
 

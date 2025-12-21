@@ -27,6 +27,19 @@ def read_file_with_encoding(file_path: str, encodings: list[str]):
     return None
 
 
+def get_lyrics_by_ratio(lyrics_data: list) -> str:
+    """
+    通过ratio字段，获取匹配度最高的歌词
+    """
+    max_ratio = 0
+    lyrics = ''
+    for item in lyrics_data:
+        if item["ratio"] > max_ratio:
+            max_ratio = item["ratio"]
+            lyrics = item["lyrics"]
+    return lyrics
+
+
 @app.route('/lyrics', methods=['GET'], endpoint='lyrics_endpoint')
 @v1_bp.route('/lyrics/single', methods=['GET'], endpoint='lyrics_endpoint')
 @require_auth_decorator(permission='r')
@@ -34,7 +47,10 @@ def read_file_with_encoding(file_path: str, encodings: list[str]):
 def lyrics():
     # 通过request参数获取文件路径
     if not bool(request.args):
-        abort(404, "请携带参数访问")
+        abort(400, "请携带参数访问")
+    title = unquote_plus(request.args.get('title', ''))
+    artist = unquote_plus(request.args.get('artist', ''))
+    album = unquote_plus(request.args.get('album', ''))
     path = unquote_plus(request.args.get('path', ''))
     # 根据文件路径查找同名的 .lrc 文件
     if path:
@@ -50,16 +66,13 @@ def lyrics():
             return lrc_in
     except:
         pass
+    # 通过request参数获取音乐歌词
     try:
-        # 通过request参数获取音乐Tag
-        title = unquote_plus(request.args.get('title', ''))
-        artist = unquote_plus(request.args.get('artist', ''))
-        album = unquote_plus(request.args.get('album', ''))
         result: list = searchx.search_all(
             title=title, artist=artist, album=album, search_for="lyrics", timeout=15)
-        if not result[0].get('lyrics'):
+        if not result[0]["lyrics"]:
             return "Lyrics not found.", 404
-        return result[0].get('lyrics')
+        return get_lyrics_by_ratio(result)
     except:
         return "Lyrics not found.", 404
 
@@ -166,7 +179,7 @@ I need no sympathy
 
 理解文化背景下的隐喻
 Example
-- "I'm gonna tear this city down without you \ I'm goin' Bonnie and Clyde without you"
+- "I'm gonna tear this city down without you \\ I'm goin' Bonnie and Clyde without you"
  - positive：在没有你的城市里纵情徘徊，做孤独的无畏侠客
  - negative：我要在没有你的情况下摧毁这座城市，我要成为没有你的"邦妮与克莱德"
 英语国家文化背景：Bonnie 和 Clyde 是美国历史上著名的犯罪情侣，他们在大萧条时期进行了一系列的抢劫和逃亡，象征着反叛和不羁的爱情。

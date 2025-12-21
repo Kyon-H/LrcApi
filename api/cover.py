@@ -70,20 +70,11 @@ def cover_api():
     album = unquote_plus(request.args.get('album', ''))
     path = unquote_plus(request.args.get('path', ''))
     req_args = {key: request.args.get(key) for key in request.args}
-    '''
-    # 构建目标URL
-    target_url = 'http://api.lrc.cx/cover'
-    result = requests.get(target_url, params=req_args, headers=headers)
-    if result.status_code == 200:
-        return result.content, 200, {"Content-Type": result.headers['Content-Type']}
-    '''
     # 本地文件优先
     if res := get_local_cover_file(path):
         return res
     elif res := local_cover_api_search(title, artist, album):
         return res
-    # elif result.status_code == 404:
-        # abort(404)
     else:
         abort(500, '服务存在错误，暂时无法查询')
 
