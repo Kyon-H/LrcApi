@@ -18,7 +18,7 @@ class Crypto:
 
     def encrypt(self, data: str) -> str:
         """
-        加密数据，只接收JSON字符串，不负责JSON编解码
+        加密数据, 只接收JSON字符串, 不负责JSON编解码
         :param data: json string
         :return: encrypted data
         """
@@ -27,7 +27,7 @@ class Crypto:
 
     def decrypt(self, data: str) -> str:
         """
-        解密数据，返回JSON字符串
+        解密数据, 返回JSON字符串
         :param data: encrypted data
         :return: json string
         """

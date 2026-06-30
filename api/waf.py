@@ -1,5 +1,5 @@
 """
-WAF基本防火墙，承担基本的防火墙功能
+WAF基本防火墙, 承担基本的防火墙功能
 防注入/恶意文件读取
 """
 from api import *
@@ -14,7 +14,7 @@ def security_check():
     检查请求是否合法
     :return:
     """
-    # 获取请求的URL的路径+参数部分，不包括域名
+    # 获取请求的URL的路径+参数部分, 不包括域名
     path = request.path
     if waf(path):
         logger.warning(f"检测到恶意请求: {path}")
@@ -78,7 +78,7 @@ group\s+by.+\(
             # 匹配到恶意请求
             logger.warning(f"匹配规则: {re_str}")
             return True
-    # 测试集均为恶意请求，返回False意味着存在漏报
+    # 测试集均为恶意请求, 返回False意味着存在漏报
     return False
 
 
@@ -91,10 +91,10 @@ def test():
         "php://input",  # PHP流协议
         "SELECT * FROM",  # SQL注入
         "DROP TABLE",  # SQL注入
-        "SeleCt * fRoM",  # SQL注入，大小写混合
+        "SeleCt * fRoM",  # SQL注入, 大小写混合
         "sleep(3)",  # SQL注入
         "@@version",  # SQL注入
-        "S%e%l%e%c%t * F%rom",  # SQL注入，百分号编码
+        "S%e%l%e%c%t * F%rom",  # SQL注入, 百分号编码
     ]
     for data in DATAS:
         if not waf(data):

@@ -20,13 +20,13 @@ def search(title='', artist='', album='') -> list:
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 401:
-            logger.warning("锂API接口的Token无效，请检查配置")
+            logger.warning("锂API接口的Token无效, 请检查配置")
             return []
         else:
-            logger.warning(f"锂API接口请求失败，状态码：{response.status_code}")
+            logger.warning(f"锂API接口请求失败, 状态码：{response.status_code}")
             return []
     except Exception as e:
-        logger.error(f"锂API接口请求失败，错误：{e}")
+        logger.error(f"锂API接口请求失败, 错误：{e}")
         return []
 
 

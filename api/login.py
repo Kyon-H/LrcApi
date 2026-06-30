@@ -11,7 +11,7 @@ from mod.args import args
 def login_check():
     """
     登录页面
-    未登录时返回页面，已登录时重定向至主页
+    未登录时返回页面, 已登录时重定向至主页
     :return:
     """
     if require_auth(request=request) < 0 and args("auth"):

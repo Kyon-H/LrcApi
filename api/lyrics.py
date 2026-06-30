@@ -31,12 +31,15 @@ def get_lyrics_by_ratio(lyrics_data: list) -> str:
     """
     通过ratio字段，获取匹配度最高的歌词
     """
-    max_ratio = 0
+    if not lyrics_data:
+        return ""
+    max_ratio = -1.0
     lyrics = ''
     for item in lyrics_data:
-        if item["ratio"] > max_ratio:
-            max_ratio = item["ratio"]
-            lyrics = item["lyrics"]
+        ratio = item.get("ratio", 0)
+        if ratio > max_ratio:
+            max_ratio = ratio
+            lyrics = item.get("lyrics", "")
     return lyrics
 
 
@@ -57,23 +60,27 @@ def lyrics():
         lrc_path = os.path.splitext(path)[0] + '.lrc'
         if os.path.isfile(lrc_path):
             file_content: str | None = read_file_with_encoding(
-                lrc_path, ['utf-8', 'gbk'])
+                lrc_path, ['utf-8', 'gbk', 'utf-16'])
             if file_content is not None:
                 return lrc.standard(file_content)
     try:
         lrc_in = tag.read(path).get("lyrics", "")
-        if type(lrc_in) is str and len(lrc_in) > 0:
+        if isinstance(lrc_in, str) and lrc_in.strip():
             return lrc_in
-    except:
+    except Exception:
         pass
     # 通过request参数获取音乐歌词
     try:
         result: list = searchx.search_all(
             title=title, artist=artist, album=album, search_for="lyrics", timeout=15)
-        if not result[0]["lyrics"]:
+        if not result:
             return "Lyrics not found.", 404
-        return get_lyrics_by_ratio(result)
-    except:
+        
+        lyrics_content = get_lyrics_by_ratio(result)
+        if not lyrics_content:
+            return "Lyrics not found.", 404
+        return lyrics_content
+    except Exception:
         return "Lyrics not found.", 404
 
 
@@ -111,8 +118,7 @@ def lrc_json():
             if lyric := i.get('lyrics'):
                 i['lyrics'] = lrc.standard(lyric)
                 response.append(i)
-    _response = jsonify(response)
-    _response.headers['Content-Type'] = 'application/json; charset=utf-8'
+    
     return jsonify(response)
 
 
@@ -203,14 +209,30 @@ Example
     )
     raw_output = response.choices[0].message.content
 
+    if not raw_output:
+        return jsonify({"error": "AI returned empty response", "status": "failed"}), 500
+
     lang_match = re.search(r'\[language:\s*(\w+)\]', raw_output)
     lang_tag = lang_match.group(0) if lang_match else "[language: unknown]"
 
     # 提取最终翻译
-    final_lyric = re.search(r'\[FINAL\](.*?)\[/FINAL\]', raw_output, re.DOTALL)
-    if final_lyric:
-        extracted = f"[Model Name: {MODEL}]\n" + \
-            lang_tag + "\n" + final_lyric.group(1).strip()
-        return jsonify({"data": extracted, "status": "success", "raw_output": raw_output})
+    final_lyric_match = re.search(r'\[FINAL\](.*?)\[/FINAL\]', raw_output, re.DOTALL)
+    
+    if final_lyric_match:
+        lyrics_content = final_lyric_match.group(1).strip()
     else:
-        return jsonify({"raw_output": raw_output, "status": "failed"}), 500
+        # 备选方案：如果模型没有正确使用 [FINAL] 标签，尝试寻找最后的代码块或段落
+        # 或者如果输出本身看起来就像是歌词
+        if "[language: zh]" in raw_output and "[FINAL]" not in raw_output:
+            # 可能是中文歌词直接返回了
+            lyrics_content = raw_output.split("[language: zh]")[-1].strip()
+        else:
+            # 最后的退路：返回 raw_output，由前端决定如何处理，或者返回 500
+            return jsonify({
+                "raw_output": raw_output, 
+                "status": "failed", 
+                "error": "Could not find [FINAL] tags in AI response"
+            }), 500
+
+    extracted = f"[Model Name: {MODEL}]\n" + lang_tag + "\n" + lyrics_content
+    return jsonify({"data": extracted, "status": "success", "raw_output": raw_output})

@@ -27,7 +27,7 @@ def html_login():
             <button type="button" class="btn btn-primary mb-2" onclick="submitLoginForm()">登录</button>
         </form>
         <div class="alert alert-danger" role="alert" id="failed" style="display:none">
-            登录失败，请检查您的认证信息。
+            登录失败, 请检查您的认证信息。
         </div>
     </body>
     <script>

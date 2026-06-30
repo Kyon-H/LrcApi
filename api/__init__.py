@@ -27,14 +27,14 @@ try:
     shutil.rmtree(cache_dir)
 except FileNotFoundError:
     pass
-# 定义缓存逻辑为本地文件缓存，目录为cache_dir = './flask_cache'
+# 定义缓存逻辑为本地文件缓存, 目录为cache_dir = './flask_cache'
 cache = Cache(app, config={
     'CACHE_TYPE': 'filesystem',
     'CACHE_DIR': cache_dir
 })
 
 
-# 缓存键，解决缓存未忽略参数的情况
+# 缓存键, 解决缓存未忽略参数的情况
 def make_cache_key(*args, **kwargs) -> str:
     path: str = request.path
     args: str = str(hash(frozenset(request.args.items())))
@@ -48,7 +48,7 @@ def make_cache_key(*args, **kwargs) -> str:
 def before_request():
     """
     请求前处理
-    记录请求开始时间，用于计算请求处理时长
+    记录请求开始时间, 用于计算请求处理时长
     """
     g.start_time = time.time()
     logger.info(

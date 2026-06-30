@@ -8,16 +8,16 @@ logger = logging.getLogger(__name__)
 
 # 启动参数解析器
 parser = argparse.ArgumentParser(description="启动LRCAPI服务器")
-# 添加一个 `--port` 参数，默认值28883
-parser.add_argument('--port', type=int, default=28883, help='应用的运行端口，默认28883')
-parser.add_argument('--auth', type=str, default='', help='用于验证Header.Authentication字段，建议纯ASCII字符')
+# 添加一个 `--port` 参数, 默认值28883
+parser.add_argument('--port', type=int, default=28883, help='应用的运行端口, 默认28883')
+parser.add_argument('--auth', type=str, default='', help='用于验证Header.Authentication字段, 建议纯ASCII字符')
 parser.add_argument("--debug", action="store_true", help="Enable debug mode")
-parser.add_argument('--ip', type=str, default='*', help='服务器监听IP，默认*')
+parser.add_argument('--ip', type=str, default='*', help='服务器监听IP, 默认*')
 parser.add_argument('--token', type=str, default='', help='锂API接口的Token')
-parser.add_argument('--ai-type', type=str, default='openai', help='AI类型，默认openai')
-parser.add_argument('--ai-model', type=str, default='gpt-4o-mini', help='AI模型，默认gpt-4o-mini')
-parser.add_argument('--ai-base-url', type=str, default='https://api.openai.com/v1', help='AI基础URL，默认https://api.openai.com/v1')
-parser.add_argument('--ai-api-key', type=str, default='', help='AI API Key，默认空')
+parser.add_argument('--ai-type', type=str, default='openai', help='AI类型, 默认openai')
+parser.add_argument('--ai-model', type=str, default='gpt-4o-mini', help='AI模型, 默认gpt-4o-mini')
+parser.add_argument('--ai-base-url', type=str, default='https://api.openai.com/v1', help='AI基础URL, 默认https://api.openai.com/v1')
+parser.add_argument('--ai-api-key', type=str, default='', help='AI API Key, 默认空')
 kw_args, unknown_args = parser.parse_known_args()
 arg_auths: dict = {kw_args.auth: "rwd"} if kw_args.auth else None
 
@@ -64,7 +64,7 @@ class Args:
         # 1. 首先用默认值初始化
         self.__data = self.__default.copy()
         
-        # 2. 加载配置文件，使用update而不是直接赋值
+        # 2. 加载配置文件, 使用update而不是直接赋值
         for loader in (self.__load_json, self.__load_yaml):
             data = loader()
             if isinstance(data, dict):

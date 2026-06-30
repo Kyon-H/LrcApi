@@ -18,7 +18,7 @@ def search_all(title: str, artist: str, album: str, search_for: str, timeout=15)
         for func in funcs:
             _futures.append(executor.submit(request, func))
 
-        # 等待所有任务完成，或回收超时任务，处理TimeoutError
+        # 等待所有任务完成, 或回收超时任务, 处理TimeoutError
         try:
             for future in futures.as_completed(_futures, timeout=timeout):
                 future.result()

@@ -10,7 +10,7 @@ from mod.auth import require_auth_decorator
 @app.route('/')
 def redirect_to_welcome():
     """
-    重定向至/src，显示主页
+    重定向至/src, 显示主页
     :return:
     """
     return redirect('/src')
@@ -25,7 +25,7 @@ def acknowledgments():
 @app.route('/favicon.ico')
 def favicon():
     """
-    favicon位置，返回图片
+    favicon位置, 返回图片
     :return:
     """
     return send_from_directory(src_path, 'img/Logo_Design.svg')
