@@ -1,10 +1,11 @@
 import os
 import pytest
 from app import app
-from dotenv import load_dotenv
-
-# load .env file
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 # Access environment variables
 auth = os.environ.get('AUTH_TOKEN')
 
